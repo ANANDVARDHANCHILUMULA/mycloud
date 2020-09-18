@@ -200,6 +200,21 @@ def allowed_file(filename):
 
 @app.route('/handle_file_upload', methods=['POST'])
 def handle_file_upload():
+    if not 'userToken' in session :
+        session['error']='You must login to access this page.'
+        return redirect('/login')
+
+    #validate usertoken
+    token_document =mongo.db.user_tokens.find_one({
+        'sessionHash': session['userToken'],
+    })
+
+    if token_document is None :
+        session.pop('userToken', None)
+        session['error']='You must login again to access this page.'
+        return redirect('/login')
+
+
     if 'uploadedFile' not in request.files:
         session['error']='no file uploaded'
         return redirect('/')
@@ -216,8 +231,21 @@ def handle_file_upload():
         return redirect('/')
 
     #TODO file size check
-
+    extension = file.filename.rsplit('.', 1)[1].lower()
     filename = secure_filename(file.filename)
-    file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+    filepath =os.path.join(app.config['UPLOAD_FOLDER'], filename)
+    file.save(filepath)
 
-    return "file upload is not handled yet"
+    result=mongo.db.files.insert_one({
+        'userId': token_document['userId'],
+        'originalFileName': file.filename,
+        'fileType': extension,
+        'fileSize': 0,
+        'fileHash': '',
+        'filepath':filepath,
+        'isActive': True,
+        'createdAt': datetime.utcnow(),
+        
+    })
+
+    return redirect('/')
