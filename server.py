@@ -13,10 +13,12 @@ from cfg import config
 from hashlib import sha256
 from utils import get_random_string
 from datetime import datetime
+from werkzeug.utils import secure_filename
+import os
 
 app = Flask(__name__)
 app.config["MONGO_URI"] = config['mongo_uri']
-app.config["UPLOAD_FOLDER"] = 'C/work/mycloud/uploads'
+app.config["UPLOAD_FOLDER"] = 'C:/work/mycloud/uploads'
 app.secret_key=b'afckaglsyp^^&*))&$&'
 mongo = PyMongo(app)
 ############## INDEX PAGE ########################
@@ -199,7 +201,7 @@ def allowed_file(filename):
 @app.route('/handle_file_upload', methods=['POST'])
 def handle_file_upload():
     if 'uploadedFile' not in request.files:
-        session['error']="no file uploaded"
+        session['error']='no file uploaded'
         return redirect('/')
     file=request.files['uploadedFile']    
     print('i have got the file')
